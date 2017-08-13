@@ -28,18 +28,24 @@
 int LayersExtentProxy::_width = -1;
 int LayersExtentProxy::_height = -1;
 GmicQt::InputMode LayersExtentProxy::_inputMode = GmicQt::All;
-
-QSize LayersExtentProxy::getExtent(GmicQt::InputMode mode)
+// begin gmic_qt_library
+QSize LayersExtentProxy::getExtent(GmicQt::InputMode mode, gmic_filter_execution_data_t * filter_exec_data)
+// end gmic_qt_library
 {
   QSize size;
-  getExtent(mode,size.rwidth(),size.rheight());
+  // begin gmic_qt_library
+  getExtent(mode,size.rwidth(),size.rheight(),filter_exec_data);
+  // end gmic_qt_library
   return size;
 }
-
-void LayersExtentProxy::getExtent(GmicQt::InputMode mode, int & width, int & height)
+// begin gmic_qt_library
+void LayersExtentProxy::getExtent(GmicQt::InputMode mode, int & width, int & height, gmic_filter_execution_data_t * filter_exec_data)
+// end gmic_qt_library
 {
   if ( mode != _inputMode || _width == -1 || _height == -1 ) {
-    gmic_qt_get_layers_extent(&_width,&_height,mode);
+    // begin gmic_qt_library
+    gmic_qt_get_layers_extent(&_width,&_height,mode,filter_exec_data);
+    // end gmic_qt_library
     width = _width;
     height = _height;
   } else {

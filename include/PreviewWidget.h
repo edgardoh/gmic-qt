@@ -52,7 +52,9 @@ public:
   double currentZoomFactor() const;
   void updateVisibleRect();
   void centerVisibleRect();
-  void setPreviewImage(const QImage & );
+  // begin gmic_qt_library
+  void setPreviewImage(const QImage & image, gmic_filter_execution_data_t * filter_data);
+  // end gmic_qt_library
   const QImage & image() const;
   void translateNormalized(double dx, double dy );
   void translateFullImage(double dx, double dy);
@@ -142,6 +144,9 @@ private:
   QImage _cachedOriginalImage;
   PreviewPosition _cachedOriginalImagePosition;
   PreviewPosition _positionAtUpdateRequest;
+  // begin gmic_qt_library
+  gmic_filter_execution_data_t * _filter_exec_data;
+  // end gmic_qt_library
 };
 
 #endif // _GMIC_QT_PREVIEWWIDGET_H_

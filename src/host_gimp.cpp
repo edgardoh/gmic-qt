@@ -240,7 +240,7 @@ void gmic_qt_show_message(const char * message)
   }
 }
 
-void gmic_qt_apply_color_profile(cimg_library::CImg<float> & image)
+void gmic_qt_apply_color_profile(cimg_library::CImg<float> & image, gmic_filter_execution_data_t * /*filter_exec_data*/)
 {
 #if (GIMP_MAJOR_VERSION<2) || ((GIMP_MAJOR_VERSION==2) && (GIMP_MINOR_VERSION<=8))
   unused(image);
@@ -277,7 +277,7 @@ void gmic_qt_apply_color_profile(cimg_library::CImg<float> & image)
 #endif
 }
 
-void gmic_qt_get_layers_extent(int * width, int * height, GmicQt::InputMode mode)
+void gmic_qt_get_layers_extent(int * width, int * height, GmicQt::InputMode mode, gmic_filter_execution_data_t * /*filter_exec_data*/)
 {
   int layersCount = 0;
   const int * begLayers = gimp_image_get_layers(gmic_qt_gimp_image_id, &layersCount);
@@ -350,7 +350,7 @@ void gmic_qt_get_layers_extent(int * width, int * height, GmicQt::InputMode mode
   }
 }
 
-void gmic_qt_get_image_size(int * width, int * height)
+void gmic_qt_get_image_size(int * width, int * height, gmic_filter_execution_data_t * /*filter_exec_data*/)
 {
   *width = 0;
   *height = 0;
@@ -374,7 +374,8 @@ void gmic_qt_get_cropped_images( gmic_list<float> & images,
                                  double y,
                                  double width,
                                  double height,
-                                 GmicQt::InputMode mode )
+                                 GmicQt::InputMode mode,
+				 gmic_filter_execution_data_t * /*filter_exec_data*/ )
 {
   using cimg_library::CImg;
   using cimg_library::CImgList;
@@ -545,9 +546,14 @@ void gmic_qt_get_cropped_images( gmic_list<float> & images,
 }
 
 void gmic_qt_output_images( gmic_list<gmic_pixel_type> & images,
-                            const gmic_list<char> & imageNames,
-                            GmicQt::OutputMode outputMode,
-                            const char * verboseLayersLabel )
+			const gmic_list<char> & imageNames,
+			GmicQt::OutputMode outputMode,
+			const QString& /*filterName*/, 
+			const QString& /*filterCommand*/,
+			const QString& /*filterPreviewCommand*/,
+			const QList<QString>& /*paramsValues*/,
+			gmic_filter_execution_data_t * /*filter_exec_data*/,
+			const char * verboseLayersLabel )
 {
   // Output modes in original gmic_gimp_gtk : 0/Replace 1/New layer 2/New active layer  3/New image
 

@@ -57,6 +57,10 @@ void Updater::setInstanceParent(QObject *parent)
 
 Updater::~Updater()
 {
+  // begin gmic_qt_library
+  _instance = 0;
+  _instanceParent = 0;
+  // end gmic_qt_library
 }
 
 void Updater::updateSources(bool useNetwork)

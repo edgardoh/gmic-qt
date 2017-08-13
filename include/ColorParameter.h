@@ -51,7 +51,7 @@ signals:
   void valueChanged();
 private:
   void updateButtonColor();
-  QString _name;
+//  QString _name;
   QColor _default;
   QColor _value;
   bool _alphaChannel;

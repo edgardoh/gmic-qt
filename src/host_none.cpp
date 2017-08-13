@@ -63,21 +63,28 @@ namespace GmicQt {
    const char * HostApplicationShortname = GMIC_QT_XSTRINGIFY(GMIC_HOST);
 }
 
-void gmic_qt_get_image_size(int * x, int * y)
+// begin gmic_qt_library
+void gmic_qt_get_image_size(int * x, int * y, gmic_filter_execution_data_t * /*filter_exec_data*/)
+// end gmic_qt_library
 {
   *x = gmic_qt_standalone::input_image.width();
   *y = gmic_qt_standalone::input_image.height();
 }
 
-void gmic_qt_get_layers_extent(int * width, int * height, GmicQt::InputMode )
+// begin gmic_qt_library
+void gmic_qt_get_layers_extent(int * width, int * height, GmicQt::InputMode, gmic_filter_execution_data_t * filter_exec_data)
 {
-  gmic_qt_get_image_size(width,height);
+  gmic_qt_get_image_size(width,height,filter_exec_data);
 }
+// end gmic_qt_library
 
 void gmic_qt_get_cropped_images(gmic_list<float> & images,
                                 gmic_list<char> & imageNames,
                                 double x, double y, double width, double height,
-                                GmicQt::InputMode mode)
+                                // begin gmic_qt_library
+                                GmicQt::InputMode mode,
+				gmic_filter_execution_data_t * /*filter_exec_data*/)
+                                // end gmic_qt_library
 {
   QImage & input_image = gmic_qt_standalone::input_image;
   const bool entireImage = x < 0 && y < 0 && width < 0 && height < 0;
@@ -108,10 +115,17 @@ void gmic_qt_get_cropped_images(gmic_list<float> & images,
   }
 }
 
-void gmic_qt_output_images( gmic_list<float> & images,
-                            const gmic_list<char> & imageNames,
-                            GmicQt::OutputMode mode,
-                            const char * verboseLayersLabel )
+void gmic_qt_output_images( gmic_list<gmic_pixel_type> & images,
+			const gmic_list<char> & imageNames,
+			GmicQt::OutputMode mode,
+                        // begin gmic_qt_library
+			const QString& /*filterName*/, 
+			const QString& /*filterCommand*/,
+			const QString& /*filterPreviewCommand*/,
+			const QList<QString>& /*paramsValues*/,
+			gmic_filter_execution_data_t * /*filter_exec_data*/,
+                        // end gmic_qt_library
+			const char * verboseLayersLabel )
 {
   if ( images.size() > 0 ) {
     ImageDialog * dialog = new ImageDialog(QApplication::topLevelWidgets().at(0));
@@ -183,7 +197,9 @@ int main(int argc, char * argv[])
   }
 }
 
-void gmic_qt_apply_color_profile(cimg_library::CImg<gmic_pixel_type> & )
+// begin gmic_qt_library
+void gmic_qt_apply_color_profile(cimg_library::CImg<gmic_pixel_type> & , gmic_filter_execution_data_t * )
+// end gmic_qt_library
 {
 
 }

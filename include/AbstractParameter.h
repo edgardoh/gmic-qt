@@ -43,6 +43,9 @@ public:
   virtual void reset() = 0;
   static AbstractParameter * createFromText(const char * text, int & length, QString & error, QObject * parent = 0);
   virtual void initFromText(const char * text, int & textLength) = 0;
+  // begin gmic_qt_library
+  QString name() { return _name; }
+  // end gmic_qt_library
 
 signals:
   void valueChanged();
@@ -52,6 +55,9 @@ protected:
   bool matchType(const QString & type, const char * text) const;
   bool _update;
   const bool _actualParameter;
+  // begin gmic_qt_library
+  QString _name;
+  // end gmic_qt_library
 };
 
 #endif // _GMIC_QT_ABSTRACTPARAMETER_H_

@@ -50,6 +50,11 @@ public:
   bool operator<(const QStandardItem & other ) const;
   static bool matchWordList(const QStringList & words, const QString & str);
 
+  // begin gmic_qt_library
+  static FiltersTreeFaveItem * findFaveWithCommand( QStandardItem * folder, QString name, QString command, QString previewCommand );
+  static FiltersTreeFilterItem * findFilterWithCommand( QStandardItem * folder, QString name, QString command, QString previewCommand );
+  // end gmic_qt_library
+
   void setVisibilityItem( QStandardItem * );
   bool isVisible() const;
   void setVisibility(bool visibility);

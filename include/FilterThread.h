@@ -57,7 +57,16 @@ public:
   FilterThread(QObject * parent,
                const QString & name,
                const QString & command,
+               // begin gmic_qt_library
+	       const QString & originalName,
+               const QString & previewCommand,
+               // end gmic_qt_library
                const QString & arguments,
+               // begin gmic_qt_library
+               const QList<QString> & paramsValues,
+               bool runPreview,
+		const float imageScale,
+               // end gmic_qt_library
                const QString & environment,
                GmicQt::OutputMessageMode mode);
 
@@ -75,6 +84,13 @@ public:
   int duration() const;
   float progress() const;
   QString name() const;
+  // begin gmic_qt_library
+  QString command() const;
+  QString originalName() const;
+  QString previewCommand() const;
+  QString arguments() const;
+  QList<QString> paramsValues() const;
+  // end gmic_qt_library
   QString fullCommand() const;
 
 public slots:
@@ -86,7 +102,16 @@ signals:
 private:
   void setCommand(const QString & command);
   QString _command;
+  // begin gmic_qt_library
+  QString _originalName;
+  QString _previewCommand;
+  // end gmic_qt_library
   QString _arguments;
+  // begin gmic_qt_library
+  QList<QString> _paramsValues;
+  bool _runPreview;
+  float _imageScale;
+  // end gmic_qt_library
   QString _environment;
   cimg_library::CImgList<float> * _images;
   cimg_library::CImgList<char> * _imageNames;

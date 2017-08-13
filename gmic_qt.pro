@@ -33,6 +33,9 @@ equals(QT_MAJOR_VERSION,5) {
 !system(bash pkg-config-check.sh):error("pkg-config is not installed")
 
 TEMPLATE = app
+equals( HOST, "lib" ) {
+ TEMPLATE = lib
+}
 QT += widgets network
 CONFIG	+= qt c++11
 CONFIG	+= warn_on
@@ -96,6 +99,15 @@ equals( HOST, "none") {
  message(Building standalone version)
 }
 
+equals( HOST, "lib") {
+ TARGET = gmic_qt
+ DEFINES += GMIC_HOST=lib
+ SOURCES += src/gmic_qt_lib.cpp
+ HEADERS += include/gmic_qt_lib.h
+ SOURCES += src/host_lib.cpp
+ message(Building library version)
+}
+
 equals( HOST, "krita") {
  TARGET = gmic_krita_qt
  SOURCES += src/host_krita.cpp
@@ -140,6 +152,20 @@ SOURCES += $$GMIC_PATH/gmic.cpp
 # ALL_FORMS
 FORMS +=  ui/inoutpanel.ui ui/multilinetextparameterwidget.ui ui/progressinfowindow.ui ui/dialogsettings.ui ui/progressinfowidget.ui ui/mainwindow.ui ui/SearchFieldWidget.ui ui/headlessprogressdialog.ui ui/zoomlevelselector.ui
 
+equals( HOST, "lib" ) {
+ linux {
+  target.path = /usr/lib
+  INSTALLS += target
+ }
+
+ headersDataFiles.path = /usr/include
+ headersDataFiles.files = include/gmic_qt_lib.h
+ INSTALLS += headersDataFiles
+ 
+ HEADERS +=  include/GmicLibParser.h
+ SOURCES +=  src/GmicLibParser.cpp
+}
+
 RESOURCES = gmic_qt.qrc translations.qrc
 
 TRANSLATIONS = \
@@ -173,14 +199,28 @@ CONFIG(release, debug|release) {
 CONFIG(debug, debug|release) {
     message(Debug build)
     DEFINES += _GMIC_QT_DEBUG_
-    QMAKE_CXXFLAGS_DEBUG += -fsanitize=address
-    QMAKE_LFLAGS_DEBUG += -fsanitize=address
+  !equals( HOST, "lib") {
+     QMAKE_CXXFLAGS_DEBUG += -fsanitize=address
+     QMAKE_LFLAGS_DEBUG += -fsanitize=address
+  }
 }
 
-UI_DIR = .ui
-MOC_DIR = .moc
-RCC_DIR = .qrc
-OBJECTS_DIR = .obj
+CONFIG(debug, debug|release) {
+    DESTDIR = build/debug
+}
+CONFIG(release, debug|release) {
+    DESTDIR = build/release
+}
+
+OBJECTS_DIR = $$DESTDIR/.obj
+MOC_DIR = $$DESTDIR/.moc
+RCC_DIR = $$DESTDIR/.qrc
+UI_DIR = $$DESTDIR/.ui
+
+# UI_DIR = .ui
+# MOC_DIR = .moc
+# RCC_DIR = .qrc
+# OBJECTS_DIR = .obj
 
 unix:!macx { DEFINES += _IS_UNIX_ }
 macx {  DEFINES += _IS_MACOS_ }

@@ -33,6 +33,7 @@
 #include <QDebug>
 #include "HtmlTranslator.h"
 #include "Common.h"
+#include <typeinfo>
 
 FiltersTreeAbstractItem::FiltersTreeAbstractItem(const QString & name)
   : QStandardItem(name),
@@ -158,6 +159,52 @@ FiltersTreeAbstractItem::findFilter(QStandardItem * folder, QString hash)
   }
   return 0;
 }
+
+// begin gmic_qt_library
+FiltersTreeFaveItem *
+FiltersTreeAbstractItem::findFaveWithCommand(QStandardItem * folder, QString name, QString command, QString previewCommand)
+{
+  int count = folder->rowCount();
+  for (int row = 0; row < count; ++row) {
+    FiltersTreeFaveItem * item = dynamic_cast<FiltersTreeFaveItem*>(folder->child(row));
+    if ( item ) {
+    	if ( typeid(*item) == typeid(FiltersTreeFaveItem) ) {
+    		if ( item->name() == name && item->command() == command && item->previewCommand() == previewCommand ) {
+    			return item;
+    		}
+    	}
+    }
+  }
+  return 0;
+}
+
+FiltersTreeFilterItem *
+FiltersTreeAbstractItem::findFilterWithCommand(QStandardItem * folder, QString name, QString command, QString previewCommand)
+{
+  int rows = folder->rowCount();
+  for (int row = 0; row < rows; ++row ) {
+    QStandardItem * item = folder->child(row);
+    FiltersTreeFilterItem * filter = static_cast<FiltersTreeFilterItem*>(item);
+    FiltersTreeFolderItem * subFolder = static_cast<FiltersTreeFolderItem*>(item);
+    if ( filter ) {
+			if ( typeid(*filter) == typeid(FiltersTreeFilterItem) ) {
+				if ( filter->name() == name && filter->command() == command && filter->previewCommand() == previewCommand ) {
+					return filter;
+				}
+			}
+    }
+    if ( subFolder ) {
+    	if ( typeid(*subFolder) == typeid(FiltersTreeFolderItem) ) {
+				FiltersTreeFilterItem * found = findFilterWithCommand(subFolder,name,command,previewCommand);
+				if ( found ) {
+					return found;
+				}
+    	}
+    }
+  }
+  return 0;
+}
+// end gmic_qt_library
 
 bool FiltersTreeAbstractItem::operator<(const QStandardItem & other) const
 {

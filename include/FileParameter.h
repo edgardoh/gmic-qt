@@ -47,7 +47,7 @@ signals:
   void valueChanged();
 private:
   enum DialogMode { InputMode, OutputMode, InputOutputMode };
-  QString _name;
+  // QString _name;
   QString _default;
   QString _value;
   QLabel * _label;

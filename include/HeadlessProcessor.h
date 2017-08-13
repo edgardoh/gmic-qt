@@ -30,6 +30,7 @@
 #include <QObject>
 #include <QString>
 #include "gmic_qt.h"
+#include "gmic_qt_lib.h"
 
 class FilterThread;
 
@@ -50,17 +51,29 @@ public:
    * @param parent
    */
   explicit HeadlessProcessor(QObject *parent,
-                             const char * command,
+                             // begin gmic_qt_library
+//                             const char * command,
+                             const char * arguments,
+                             // end gmic_qt_library
                              GmicQt::InputMode inputMode,
-                             GmicQt::OutputMode outputMode);
+                             GmicQt::OutputMode outputMode,
+                             // begin gmic_qt_library
+                             gmic_filter_execution_data_t * filter_exec_data = nullptr,
+                             const char * filterName = nullptr,
+                             const char * command = nullptr,
+                             const char * previewCommand = nullptr
+                             // end gmic_qt_library
+														 );
 
   /**
    * @brief Construct a headless processor using last execution parameters
    *
    * @param parent
    */
-  explicit HeadlessProcessor(QObject *parent = 0);
-
+  // begin gmic_qt_library
+  explicit HeadlessProcessor(QObject *parent = 0, gmic_filter_execution_data_t * filter_exec_data = 0);
+  // end gmic_qt_library
+  
   ~HeadlessProcessor();
   QString command() const;
   QString filterName() const;
@@ -88,6 +101,10 @@ private:
   QString _lastEnvironment;
   bool _hasProgressWindow;
   QTimer _singleShotTimer;
+  // begin gmic_qt_library
+  gmic_filter_execution_data_t * _filter_exec_data;
+  QString _lastPreviewCommand;
+  // end gmic_qt_library
 };
 
 #endif // _GMIC_QT_HEADLESSPROCESSOR_H_

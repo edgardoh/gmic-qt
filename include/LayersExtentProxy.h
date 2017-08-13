@@ -26,11 +26,14 @@
 #define _GMIC_QT_LAYERS_EXTENT_PROXY_H_
 #include <QSize>
 #include "gmic_qt.h"
+#include "gmic_qt_lib.h"
 
 class LayersExtentProxy {
 public:
-  static void getExtent( GmicQt::InputMode mode, int & width, int & height );
-  static QSize getExtent( GmicQt::InputMode mode );
+  // begin gmic_qt_library
+  static void getExtent( GmicQt::InputMode mode, int & width, int & height, gmic_filter_execution_data_t * filter_exec_data );
+  static QSize getExtent( GmicQt::InputMode mode, gmic_filter_execution_data_t * filter_exec_data );
+  // end gmic_qt_library
   static void clearCache();
 private:
   LayersExtentProxy() = delete;

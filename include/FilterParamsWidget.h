@@ -53,6 +53,9 @@ public:
   QString filterName() const;
   int actualParametersCount() const;
   QString filterHash() const;
+  // begin gmic_qt_library
+  QList<QString> getOutputParameters();
+  // end gmic_qt_library
 
 public slots:
   void updateValueString(bool notify = true);

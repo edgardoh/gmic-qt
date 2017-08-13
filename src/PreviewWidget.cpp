@@ -54,7 +54,9 @@ PreviewWidget::PreviewWidget(QWidget *parent) :
   _timerID = 0;
   _savedPreviewIsValid = false;
   _paintOriginalImage = true;
-
+  // begin gmic_qt_library
+  _filter_exec_data = 0;
+  // end gmic_qt_library
   qApp->installEventFilter(this);
 }
 
@@ -66,13 +68,18 @@ const QImage & PreviewWidget::image() const
 {
   return _image;
 }
-
-void PreviewWidget::setPreviewImage(const QImage & image)
+// begin gmic_qt_library
+void PreviewWidget::setPreviewImage(const QImage & image, gmic_filter_execution_data_t * filter_exec_data)
+// end gmic_qt_library
 {
   if ( _visibleRect != _positionAtUpdateRequest ) {
     return;
   }
   _image = image;
+  // begin gmic_qt_library
+  _filter_exec_data = filter_exec_data;
+  // end gmic_qt_library
+  
   _paintOriginalImage = false;
   if ( isAtFullZoom() ) {
     _currentZoomFactor = std::min( width() / (double) _fullImageSize.width(),
@@ -340,7 +347,9 @@ void PreviewWidget::updateImageNames(gmic_list<char> & imageNames, GmicQt::Input
 {
   int maxWidth;
   int maxHeight;
-  LayersExtentProxy::getExtent(mode,maxWidth,maxHeight);
+  // begin gmic_qt_library
+  LayersExtentProxy::getExtent(mode,maxWidth,maxHeight,_filter_exec_data);
+  // end gmic_qt_library
   float xFactor = (_visibleRect.w * _fullImageSize.width()) / (float) maxWidth;
   float yFactor = (_visibleRect.h * _fullImageSize.height()) / (float) maxHeight;
 
@@ -527,9 +536,13 @@ QImage PreviewWidget::originalImage()
   }
   gmic_list<float> images;
   gmic_list<char> imageNames;
-  gmic_qt_get_cropped_images( images, imageNames, _visibleRect.x, _visibleRect.y, _visibleRect.w, _visibleRect.h, GmicQt::Active );
+  // begin gmic_qt_library
+  gmic_qt_get_cropped_images( images, imageNames, _visibleRect.x, _visibleRect.y, _visibleRect.w, _visibleRect.h, GmicQt::Active, _filter_exec_data );
+  // end gmic_qt_library
   if (images.size() > 0) {
-    gmic_qt_apply_color_profile(images[0]);
+    // begin gmic_qt_library
+    gmic_qt_apply_color_profile(images[0], _filter_exec_data);
+    // end gmic_qt_library
     ImageConverter::convert(images[0],_cachedOriginalImage);
     _cachedOriginalImagePosition = _visibleRect;
   }

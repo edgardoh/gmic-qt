@@ -27,18 +27,37 @@
 #include "FilterThread.h"
 #include "ImageConverter.h"
 #include "GmicStdlibParser.h"
+#include "GmicLibParser.h"
 #include "gmic.h"
 using namespace cimg_library;
 
 FilterThread::FilterThread(QObject *parent,
                            const QString & name,
                            const QString & command,
+                           // begin gmic_qt_library
+													 const QString & originalName,
+                           const QString & previewCommand,
+                           // end gmic_qt_library
                            const QString & arguments,
+                           // begin gmic_qt_library
+                           const QList<QString> & paramsValues,
+                           bool runPreview,
+													 const float imageScale,
+                           // end gmic_qt_library
                            const QString & environment,
                            GmicQt::OutputMessageMode mode)
   : QThread(parent),
     _command(command),
+    // begin gmic_qt_library
+		_originalName(originalName),
+    _previewCommand(previewCommand),
+    // end gmic_qt_library
     _arguments(arguments),
+    // begin gmic_qt_library
+    _paramsValues(paramsValues),
+    _runPreview(runPreview),
+		_imageScale(imageScale),
+    // end gmic_qt_library
     _environment(environment),
     _images(new cimg_library::CImgList<float>),
     _imageNames(new cimg_library::CImgList<char>),
@@ -118,6 +137,33 @@ QString FilterThread::name() const
   return _name;
 }
 
+// begin gmic_qt_library
+QString FilterThread::command() const
+{
+  return _command;
+}
+
+QString FilterThread::originalName() const
+{
+  return _originalName;
+}
+
+QString FilterThread::previewCommand() const
+{
+  return _previewCommand;
+}
+
+QString FilterThread::arguments() const
+{
+  return _arguments;
+}
+
+QList<QString> FilterThread::paramsValues() const
+{
+  return _paramsValues;
+}
+// end gmic_qt_library
+
 QString FilterThread::fullCommand() const
 {
   return QString("-%1 %2").arg(_command).arg(_arguments);
@@ -150,6 +196,9 @@ FilterThread::run()
     } else if ( _messageMode == GmicQt::DebugConsole || _messageMode == GmicQt::DebugLogFile  ) {
       fullCommandLine = QString("-debug") ;
     }
+    // begin gmic_qt_library
+    fullCommandLine += QString(" _IMAGE_SCALE=%1").arg(_imageScale);
+    // end gmic_qt_library
     fullCommandLine += QString(" -%1 %2").arg(_command).arg(_arguments);
     _gmicAbort = false;
     _gmicProgress = -1;

@@ -35,6 +35,7 @@
 #include "StoredFave.h"
 #include "Common.h"
 #include "gmic_qt.h"
+#include "gmic_qt_lib.h"
 
 namespace Ui {
 class MainWindow;
@@ -58,8 +59,13 @@ class MainWindow : public QWidget
 
 public:
   enum PreviewPosition { PreviewOnLeft, PreviewOnRight };
-
-  explicit MainWindow(QWidget *parent = 0);
+  explicit MainWindow(
+  		// begin gmic_qt_library
+  		gmic_filter_execution_data_t * filter_exec_data = 0, QString *initialName = 0, QString *initialCommand = 0, 
+			QString *initialPreviewCommand = 0, QList<QString> *initialArguments = 0, 
+			const float imageScale = 1.,
+  		// end gmic_qt_library
+  		QWidget *parent = 0);
   ~MainWindow();
   void updateFiltersFromSources(int ageLimit, bool useNetwork);
 
@@ -140,6 +146,11 @@ private:
   void saveFaves();
   void buildFiltersTree();
 
+  // begin gmic_qt_library
+  FiltersTreeFaveItem * findFaveWithCommand( const QString & name, const QString & command, const QString & previewCommand, ModelType modelType );
+  FiltersTreeFilterItem * findFilterWithCommand( const QString & name, const QString & command, const QString & previewCommand, ModelType modelType );
+  // end gmic_qt_library
+
   void backupExpandedFoldersPaths();
   void expandedFolderPaths(QStandardItem * item, QStringList & list);
   void restoreExpandedFolders();
@@ -184,6 +195,16 @@ private:
   bool _showMaximized;
   bool _lastExecutionOK;
   bool _newSession;
+
+  // begin gmic_qt_library
+  static bool _first;
+  gmic_filter_execution_data_t * _filter_exec_data;
+  QString _initialName;
+  QString _initialCommand;
+  QString _initialPreviewCommand;
+  QList<QString> _initialArguments;
+  float _imageScale;
+  // end gmic_qt_library
 
   static const QString FilterTreePathSeparator;
 

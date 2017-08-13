@@ -26,6 +26,7 @@
 #define _GMIC_QT_HOST_H_
 #include "Common.h"
 #include "gmic_qt.h"
+#include "gmic_qt_lib.h"
 #include <QString>
 
 namespace cimg_library {
@@ -46,8 +47,9 @@ extern const char * HostApplicationShortname;
  * @param[out] width
  * @param[out] height
  */
-void gmic_qt_get_image_size(int * width, int * height);
-
+// begin gmic_qt_library
+void gmic_qt_get_image_size(int * width, int * height, gmic_filter_execution_data_t * filter_exec_data);
+// end gmic_qt_library
 /**
  * @brief Get the largest width and largest height among all the layers
  *        according to the input mode (\see gmic_qt.h).
@@ -55,8 +57,9 @@ void gmic_qt_get_image_size(int * width, int * height);
  * @param[out] width
  * @param[out] height
  */
-void gmic_qt_get_layers_extent(int * width, int * height, GmicQt::InputMode );
-
+// begin gmic_qt_library
+void gmic_qt_get_layers_extent(int * width, int * height, GmicQt::InputMode, gmic_filter_execution_data_t * filter_exec_data);
+// end gmic_qt_library
 /**
  * @brief Get a list of (cropped) image layers from host software.
  *
@@ -80,7 +83,10 @@ void gmic_qt_get_cropped_images( cimg_library::CImgList<gmic_pixel_type> & image
                                  double y,
                                  double width,
                                  double height,
-                                 GmicQt::InputMode mode);
+// begin gmic_qt_library
+                                 GmicQt::InputMode mode,
+				 gmic_filter_execution_data_t * filter_exec_data );
+// end gmic_qt_library
 
 /**
  * @brief Send a list of new image layers to the host application according to
@@ -94,15 +100,23 @@ void gmic_qt_get_cropped_images( cimg_library::CImgList<gmic_pixel_type> & image
 void gmic_qt_output_images(cimg_library::CImgList<gmic_pixel_type> & images,
                            const cimg_library::CImgList<char> & imageNames,
                            GmicQt::OutputMode mode,
-                           const char * verboseLayersLabel = nullptr);
+// begin gmic_qt_library
+			   const QString& filterName, 
+			   const QString& filterCommand,
+			   const QString& filterPreviewCommand,
+			   const QList<QString>& paramsValues,
+			   gmic_filter_execution_data_t * filter_exec_data, 
+                           const char * verboseLayersLabel = nullptr );
+// end gmic_qt_library
 
 /**
  * @brief Apply a color profile to a given image
  *
  * @param image[in,out] An image
  */
-void gmic_qt_apply_color_profile(cimg_library::CImg<gmic_pixel_type> & images);
-
+// begin gmic_qt_library
+void gmic_qt_apply_color_profile(cimg_library::CImg<gmic_pixel_type> & images, gmic_filter_execution_data_t * filter_exec_data);
+// end gmic_qt_library
 /**
  * @brief Display a message in the host application.
  *        This function is only used if the plugin is launched using

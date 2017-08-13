@@ -71,9 +71,19 @@
 // TODO : Handle window maximization properly (Windows as well as some Linux desktops)
 //
 
+// begin gmic_qt_library
+bool MainWindow::_first = true;
+// end gmic_qt_library
+
 const QString MainWindow::FilterTreePathSeparator("\t");
 
-MainWindow::MainWindow(QWidget *parent) :
+MainWindow::MainWindow(
+		// begin gmic_qt_library
+		gmic_filter_execution_data_t * filter_exec_data, QString *initialName, QString *initialCommand, 
+		QString *initialPreviewCommand, QList<QString> *initialArguments, 
+		const float imageScale,
+		// end gmic_qt_library
+		QWidget *parent) :
   QWidget(parent),
   ui(new Ui::MainWindow),
   _gmicImages(new cimg_library::CImgList<gmic_pixel_type>),
@@ -83,6 +93,15 @@ MainWindow::MainWindow(QWidget *parent) :
   _logFile = 0;
   _messageTimerID = 0;
 
+  // begin gmic_qt_library
+  _imageScale = imageScale;
+  _filter_exec_data = filter_exec_data;
+  if (initialName) _initialName = *initialName;
+  if (initialCommand) _initialCommand = *initialCommand;
+  if (initialPreviewCommand) _initialPreviewCommand = *initialPreviewCommand;
+  if (initialArguments) _initialArguments = *initialArguments;
+  // end gmic_qt_library
+  
 #ifdef gmic_prerelease
 #define BETA_SUFFIX "_pre#" gmic_prerelease
 #else
@@ -186,7 +205,9 @@ MainWindow::MainWindow(QWidget *parent) :
   setIcons();
 
   LayersExtentProxy::clearCache();
-  QSize layersExtents = LayersExtentProxy::getExtent(ui->inOutSelector->inputMode());
+  // begin gmic_qt_library
+  QSize layersExtents = LayersExtentProxy::getExtent(ui->inOutSelector->inputMode(),filter_exec_data);
+  // end gmic_qt_library
   ui->previewWidget->setFullImageSize(layersExtents);
   makeConnections();
 }
@@ -215,6 +236,9 @@ MainWindow::~MainWindow()
   delete _gmicImages;
   qDeleteAll(_hiddenFaves);
   _hiddenFaves.clear();
+  // begin gmic_qt_library
+  _first = true;
+  // end gmic_qt_library
 }
 
 void MainWindow::setIcons()
@@ -572,7 +596,9 @@ MainWindow::onPreviewUpdateRequested()
     ui->previewWidget->normalizedVisibleRect(x,y,w,h);
     GmicQt::InputMode inputMode = ui->inOutSelector->inputMode();
     gmic_list<char> imageNames;
-    gmic_qt_get_cropped_images(*_gmicImages,imageNames,x,y,w,h,inputMode);
+    // begin gmic_qt_library
+    gmic_qt_get_cropped_images(*_gmicImages,imageNames,x,y,w,h,inputMode,_filter_exec_data);
+    // end gmic_qt_library
     ui->previewWidget->updateImageNames(imageNames,inputMode);
     double zoomFactor = ui->previewWidget->currentZoomFactor();
     if ( zoomFactor < 1.0 ) {
@@ -594,8 +620,18 @@ MainWindow::onPreviewUpdateRequested()
     Q_ASSERT_X(_selectedAbstractFilterItem,"MainWindow::onPreviewUpdateRequested()","No filter selected");
     _filterThread = new FilterThread(this,
                                      _selectedAbstractFilterItem->plainText(),
+																		 // begin gmic_qt_library
+                                     // ui->filterParams->previewCommand(),
+																		 ui->filterParams->command(),
+																		 selectedFilterItem()->name(),
                                      ui->filterParams->previewCommand(),
+																		 // end gmic_qt_library
                                      ui->filterParams->valueString(),
+                                     // begin gmic_qt_library
+                                     ui->filterParams->getOutputParameters(),
+                                     true,
+																		 _imageScale,
+                                     // end gmic_qt_library
                                      env,
                                      ui->inOutSelector->outputMessageMode());
     _filterThread->setInputImages(*_gmicImages,imageNames);
@@ -628,13 +664,17 @@ void MainWindow::onPreviewThreadFinished()
                      Qt::AlignCenter|Qt::TextWordWrap,
                      _filterThread->errorMessage());
     painter.end();
-    ui->previewWidget->setPreviewImage(image);
+    // begin gmic_qt_library
+    ui->previewWidget->setPreviewImage(image, _filter_exec_data);
+    // end gmic_qt_library
   } else {
     gmic_list<gmic_pixel_type> images = _filterThread->images();
     for (unsigned int i = 0; i < images.size(); ++i) {
-      gmic_qt_apply_color_profile(images[i]);
+      gmic_qt_apply_color_profile( images[i],_filter_exec_data);
     }
-    ui->previewWidget->setPreviewImage(buildPreviewImage(images));
+    // begin gmic_qt_library
+    ui->previewWidget->setPreviewImage(buildPreviewImage(images), _filter_exec_data);
+    // end gmic_qt_library
   }
 
   if ( QApplication::overrideCursor() && QApplication::overrideCursor()->shape() == Qt::WaitCursor ) {
@@ -660,12 +700,23 @@ MainWindow::processImage()
   }
   _gmicImages->assign();
   gmic_list<char> imageNames;
-  gmic_qt_get_cropped_images(*_gmicImages,imageNames,-1,-1,-1,-1,ui->inOutSelector->inputMode());
+  // begin gmic_qt_library
+  gmic_qt_get_cropped_images(*_gmicImages,imageNames,-1,-1,-1,-1,ui->inOutSelector->inputMode(),_filter_exec_data);
+  // end gmic_qt_library
   Q_ASSERT_X(_selectedAbstractFilterItem,"MainWindow::processImage()","No filter selected");
   _filterThread = new FilterThread(this,
                                    _lastFilterName = _selectedAbstractFilterItem->plainText(),
                                    _lastAppliedCommand = ui->filterParams->command(),
+                                   // begin gmic_qt_library
+																	 selectedFilterItem()->name(),
+                                   ui->filterParams->previewCommand(),
+                                   // end gmic_qt_library
                                    _lastAppliedCommandArguments = ui->filterParams->valueString(),
+                                   // begin gmic_qt_library
+                                   ui->filterParams->getOutputParameters(),
+                                   false,
+																	 _imageScale,
+                                   // end gmic_qt_library
                                    ui->inOutSelector->gmicEnvString(),
                                    _lastAppliedCommandOutputMessageMode = ui->inOutSelector->outputMessageMode());
   _filterThread->setInputImages(*_gmicImages,imageNames);
@@ -711,9 +762,20 @@ MainWindow::onApplyThreadFinished()
   } else {
     gmic_list<gmic_pixel_type> images = _filterThread->images();
     if ( ( _processingAction == OkAction || _processingAction == ApplyAction ) && !_filterThread->aborted() ) {
+    	// begin gmic_qt_library
+    	QList<QString> paramsValues = _filterThread->paramsValues();
+    	// end gmic_qt_library
+    	
       gmic_qt_output_images(images,
                             _filterThread->imageNames(),
                             ui->inOutSelector->outputMode(),
+                            // begin gmic_qt_library
+                            _filterThread->originalName(),
+                            _filterThread->command(),
+                            _filterThread->previewCommand(),
+                            paramsValues,
+                            _filter_exec_data,
+                            // end gmic_qt_library
                             (ui->inOutSelector->outputMessageMode() == GmicQt::VerboseLayerName) ?
                               QString("[G'MIC] %1: %2")
                               .arg(_filterThread->name())
@@ -728,7 +790,9 @@ MainWindow::onApplyThreadFinished()
     close();
   } else {
     LayersExtentProxy::clearCache();
-    QSize extent = LayersExtentProxy::getExtent(ui->inOutSelector->inputMode());
+    // begin gmic_qt_library
+    QSize extent = LayersExtentProxy::getExtent(ui->inOutSelector->inputMode(), _filter_exec_data);
+    // end gmic_qt_library
     ui->previewWidget->setFullImageSize(extent);
     ui->previewWidget->sendUpdateRequest();
     _okButtonShouldApply = false;
@@ -1276,14 +1340,34 @@ MainWindow::selectedFilterItem()
 
 void MainWindow::showEvent(QShowEvent * event)
 {
-  static bool first = true;
+	// begin gmic_qt_library
+//  static bool first = true;
+  // end gmic_qt_library
   event->accept();
   ui->searchField->setFocus();
-  if ( first ) {
-    first = false;
+  // begin gmic_qt_library
+  if ( _first ) {
+    _first = false;
+    // end gmic_qt_library
     importFaves();
     buildFiltersTree();
 
+    // begin gmic_qt_library
+    if (!_initialCommand.isEmpty()) {
+    	FiltersTreeAbstractFilterItem * filterItem = findFilterWithCommand(_initialName, _initialCommand, _initialPreviewCommand, FullModel);
+      if ( !filterItem ) {
+        filterItem = findFaveWithCommand(_initialName, _initialCommand, _initialPreviewCommand, FullModel);
+      }
+      if ( filterItem ) {
+        ui->filtersTree->setCurrentIndex(filterItem->index());
+        
+        activateFilter(filterItem->index(),true,_initialArguments);
+        ui->previewWidget->sendUpdateRequest();
+        return;
+      }
+    }
+    // end gmic_qt_library
+    
     // Retrieve and select previously selected filter
     QString hash = QSettings().value("SelectedFilter",QString()).toString();
     if (_newSession || !_lastExecutionOK) {
@@ -1365,6 +1449,22 @@ MainWindow::findFilter(const QString & hash)
   FiltersTreeFilterItem * filter = FiltersTreeAbstractItem::findFilter(_currentFiltersTreeModel->invisibleRootItem(),hash);
   return filter;
 }
+
+// begin gmic_qt_library
+FiltersTreeFaveItem * MainWindow::findFaveWithCommand(const QString & name, const QString & command, const QString & previewCommand, ModelType modelType)
+{
+  FiltersTreeFolderItem * folder = faveFolder(modelType);
+  return folder ? FiltersTreeAbstractItem::findFaveWithCommand(folder,name,command,previewCommand) : 0;
+}
+
+FiltersTreeFilterItem *
+MainWindow::findFilterWithCommand(const QString & name, const QString & command, const QString & previewCommand, MainWindow::ModelType modelType)
+{
+  QStandardItemModel & model = modelType == FullModel ? _filtersTreeModel : _filtersTreeModelSelection;
+  FiltersTreeFilterItem * filter = FiltersTreeAbstractItem::findFilterWithCommand(model.invisibleRootItem(),name,command,previewCommand);
+  return filter;
+}
+// end gmic_qt_library
 
 void
 MainWindow::addFaveFolder()

@@ -288,3 +288,19 @@ FilterParamsWidget::clear()
   delete _paddingWidget;
   _paddingWidget = 0;
 }
+
+// begin gmic_qt_library
+QList<QString>
+FilterParamsWidget::getOutputParameters()
+{
+	QList<QString> outputParameters;
+
+  for (int i = 0; i < _presetParameters.size(); ++i) {
+    if ( _presetParameters[i]->isActualParameter() ) {
+    	outputParameters.push_back( _presetParameters[i]->textValue() );
+    }
+  }
+  return outputParameters;
+}
+// end gmic_qt_library
+

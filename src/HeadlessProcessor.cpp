@@ -36,14 +36,21 @@
 #include <psapi.h>
 #endif
 
-HeadlessProcessor::HeadlessProcessor(QObject *parent, const char *command, GmicQt::InputMode inputMode, GmicQt::OutputMode outputMode)
+HeadlessProcessor::HeadlessProcessor(QObject *parent, const char *arguments, GmicQt::InputMode inputMode, GmicQt::OutputMode outputMode,
+		// begin gmic_qt_library
+		gmic_filter_execution_data_t * filter_exec_data, const char * filterName, const char * command, const char * previewCommand
+		// end gmic_qt_library
+		)
   : QObject(parent),
     _filterThread(0),
     _gmicImages(new cimg_library::CImgList<gmic_pixel_type>)
 {
-  _filterName = "Custom command";
-  _lastCommand = "skip 0";
-  _lastArguments = command;
+	// begin gmic_qt_library
+  _filterName = (filterName) ? filterName: "Custom command";
+  _lastCommand = (command) ? command: "skip 0";
+  _lastPreviewCommand = (previewCommand) ? previewCommand: "skip 0";
+  _lastArguments = arguments;
+  // end gmic_qt_library
   _outputMessageMode = GmicQt::Quiet;
   _inputMode = inputMode;
   _outputMode = outputMode;
@@ -53,9 +60,15 @@ HeadlessProcessor::HeadlessProcessor(QObject *parent, const char *command, GmicQ
   connect(&_timer,SIGNAL(timeout()),
           this,SLOT(onTimeout()));
   _hasProgressWindow = false;
+  // begin gmic_qt_library
+  _filter_exec_data = filter_exec_data;
+  // end gmic_qt_library
 }
 
-HeadlessProcessor::HeadlessProcessor(QObject *parent)
+HeadlessProcessor::HeadlessProcessor(QObject *parent,
+		// begin gmic_qt_library
+		gmic_filter_execution_data_t * filter_exec_data)
+		// end gmic_qt_library
   : QObject(parent),
     _filterThread(0),
     _gmicImages(new cimg_library::CImgList<gmic_pixel_type>)
@@ -76,6 +89,9 @@ HeadlessProcessor::HeadlessProcessor(QObject *parent)
   connect(&_singleShotTimer,SIGNAL(timeout()),
           this,SIGNAL(singleShotTimeout()));
   _hasProgressWindow = false;
+  // begin gmic_qt_library
+  _filter_exec_data = filter_exec_data;
+  // end gmic_qt_library
 }
 
 HeadlessProcessor::~HeadlessProcessor()
@@ -90,14 +106,25 @@ void HeadlessProcessor::startProcessing()
   GmicStdLibParser::GmicStdlib = Updater::getInstance()->buildFullStdlib();
   _gmicImages->assign();
   gmic_list<char> imageNames;
-  gmic_qt_get_cropped_images(*_gmicImages,imageNames,-1,-1,-1,-1,_inputMode);
+  // begin gmic_qt_library
+  gmic_qt_get_cropped_images(*_gmicImages,imageNames,-1,-1,-1,-1,_inputMode,_filter_exec_data);
+  // end gmic_qt_library
   if ( !_hasProgressWindow ) {
     gmic_qt_show_message(QString("G'MIC: %1").arg(_lastArguments).toUtf8().constData());
   }
   _filterThread = new FilterThread(this,
                                    _filterName,
                                    _lastCommand,
+                                   // begin gmic_qt_library
+																	 _filterName,
+                                   _lastPreviewCommand,
+                                   // end gmic_qt_library
                                    _lastArguments,
+                                   // begin gmic_qt_library
+                                   QList<QString>(),
+                                   false,
+																	 1.,
+                                   // end gmic_qt_library
                                    _lastEnvironment,
                                    _outputMessageMode);
   _filterThread->setInputImages(*_gmicImages,imageNames);
@@ -166,9 +193,20 @@ void HeadlessProcessor::onProcessingFinished()
   } else {
     gmic_list<gmic_pixel_type> images = _filterThread->images();
     if ( !_filterThread->aborted() ) {
+    	// begin gmic_qt_library
+    	QList<QString> paramsValues = _filterThread->paramsValues();
+    	// end gmic_qt_library
+    	
       gmic_qt_output_images(images,
                             _filterThread->imageNames(),
                             _outputMode,
+                            // begin gmic_qt_library
+                            _filterThread->name(),
+                            _filterThread->command(),
+                            _filterThread->previewCommand(),
+                            paramsValues,
+                            _filter_exec_data,
+                            // end gmic_qt_library
                             (_outputMessageMode == GmicQt::VerboseLayerName) ?
                               QString("[G'MIC] %1: %2")
                               .arg(_filterThread->name())

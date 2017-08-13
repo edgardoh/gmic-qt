@@ -57,7 +57,7 @@ signals:
 private:
   void connectSliderSpinBox();
   void disconnectSliderSpinBox();
-  QString _name;
+//  QString _name;
   float _min;
   float _max;
   float _default;

@@ -45,7 +45,7 @@ public slots:
 signals:
   void valueChanged();
 private:
-  QString _name;
+//  QString _name;
   bool _default;
   bool _value;
   QLabel * _label;
